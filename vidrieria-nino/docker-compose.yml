@@ -1,0 +1,24 @@
+services:
+  frontend:
+    container_name: vidrieria-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - TZ=America/La_Paz
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - .:/app
+      - /app/node_modules  # Esto evita sobrescribir node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - vidrieria-network
+    # Agrega esta línea para desarrollo:
+    command: sh -c "npm install && npm run dev"
+
+networks:
+  vidrieria-network:
+    driver: bridge

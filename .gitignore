@@ -1,0 +1,12 @@
+# Ignorar node_modules (Next.js)
+vidrieria-nino/node_modules/
+vidrieria-nino/.env
+
+# Ignorar vendor y .env (Laravel)
+vidrierianinoBackend/vendor/
+vidrierianinoBackend/.env
+
+# Ignorar archivos de sistema
+.DS_Store
+
+como_iniciar

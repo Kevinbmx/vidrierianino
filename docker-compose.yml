@@ -1,0 +1,38 @@
+services:
+  frontend:
+    container_name: vidrierianinofront
+    build:
+      context: ./vidrieria-nino
+    restart: always
+    environment:
+      - TZ=America/La_Paz
+      - NODE_ENV=development
+    working_dir: /app
+    volumes:
+      - ./vidrieria-nino:/app
+      - /app/node_modules
+    networks:
+      - shared-network
+      - vidrierianino-network
+
+  backend:
+    container_name: vidrierianinoback
+    build:
+      context: ./vidrierianinoBackend
+    restart: always
+    volumes:
+      - ./vidrierianinoBackend:/var/www
+    networks:
+      - shared-network
+      - vidrierianino-network
+    environment:
+      DB_HOST: mysql_shared
+      DB_DATABASE: vidrierianino_db
+      DB_USERNAME: shared_user
+      DB_PASSWORD: secret
+   
+networks:
+  vidrierianino-network:
+    driver: bridge
+  shared-network:
+    external: true
