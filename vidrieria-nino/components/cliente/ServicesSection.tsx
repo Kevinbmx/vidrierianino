@@ -1,41 +1,64 @@
 import { Card, CardBody, CardHeader } from "@heroui/react";
-import { FaGlassMartini, FaRulerCombined, FaTools } from "react-icons/fa";
+import { CgRuler } from "react-icons/cg";
+import { IoDocumentTextOutline } from "react-icons/io5";
+import { VscTools } from "react-icons/vsc";
+import { IoShieldCheckmarkOutline } from "react-icons/io5";
 
 export default function ServicesSection() {
-  const services = [
+  const features = [
     {
-      icon: <FaGlassMartini size={48} className="mx-auto text-secondary dark:text-primary" />,
-      title: "Venta de Vidrios y Espejos",
-      description: "Ofrecemos una amplia variedad de vidrios (crudos, ahumados, catedrales) y espejos para todo tipo de proyectos.",
+      icon: <CgRuler size={48} />,
+      title: "Visita Técnica",
+      description:
+        "Medición láser de alta precisión en sitio para asegurar un ajuste perfecto sin errores.",
     },
     {
-      icon: <FaRulerCombined size={48} className="mx-auto text-secondary dark:text-primary" />,
-      title: "Instalación y Colocación",
-      description: "Instalación profesional de vidrios Blindex y convencionales, garantizando seguridad y acabados perfectos.",
+      icon: <IoDocumentTextOutline size={48} />,
+      title: "Cotización Formal",
+      description:
+        "Transparencia total con presupuestos detallados por ítem. Sin costos ocultos de último minuto.",
     },
     {
-      icon: <FaTools size={48} className="mx-auto text-secondary dark:text-primary" />,
-      title: "Mantenimiento y Reparación",
-      description: "Servicios de mantenimiento para carpintería de aluminio, Blindex y cambio de vidrios rotos.",
+      icon: <VscTools size={48} />,
+      title: "Ejecución Maestra",
+      description:
+        "Mano de obra especializada. Instalamos bajo normas internacionales de seguridad.",
+    },
+    {
+      icon: <IoShieldCheckmarkOutline size={48} />,
+      title: "35+ Años de Respaldo",
+      description:
+        "Décadas de experiencia en el mercado cruceño que brindan seguridad total a su inversión.",
     },
   ];
 
   return (
-    <section id="services" className="py-20 bg-base-100">
+    <section id="services" className="py-20 bg-background-light dark:bg-background-dark">
       <div className="container mx-auto px-6">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-primary">Nuestros Servicios</h2>
-          <p className="mt-4 text-lg text-base-content">Soluciones integrales para tus necesidades en vidrio y aluminio.</p>
+          <h2 className="text-4xl font-black text-black">¿Por qué ser el contratista de confianza en Montero?</h2>
+          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            Nuestro proceso artesanal garantiza resultados de excelencia y durabilidad para su inversión.
+          </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {services.map((service, index) => (
-            <Card key={index} className="text-center transform transition duration-500 hover:scale-105 border border-secondary dark:border-primary dark:bg-secondary/20">
-              <CardHeader className="flex justify-center items-center pt-6">
-                {service.icon}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {features.map((f, i) => (
+            <Card
+              key={i}
+              className="text-center border border-gray-200 dark:border-gray-700 hover:border-primary hover:shadow-xl transition-all group"
+            >
+              <CardHeader className="pt-6">
+                {/* Icon inside square */}
+                <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-lg bg-white transition-colors group-hover:bg-primary">
+                  <div className="text-primary group-hover:text-white transition-colors">
+                    {f.icon}
+                  </div>
+                </div>
               </CardHeader>
               <CardBody>
-                <h3 className="text-xl font-bold mb-2 text-primary">{service.title}</h3>
-                <p className="text-base-content">{service.description}</p>
+                <h3 className="text-xl font-bold text-black mb-2">{f.title}</h3>
+                <p className="text-black">{f.description}</p>
               </CardBody>
             </Card>
           ))}

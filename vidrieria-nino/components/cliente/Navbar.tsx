@@ -12,58 +12,77 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
-
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   const menuItems = [
+    { name: "Nosotros", href: "#nosotros" },
     { name: "Servicios", href: "#services" },
     { name: "Galería", href: "#gallery" },
-    { name: "Testimonios", href: "#testimonials" },
-    { name: "Contacto", href: "#contact" },
+    // { name: "Simulador", href: "#simulador" },
   ];
-
   return (
     <Navbar
       onMenuOpenChange={setIsMenuOpen}
-      className="bg-[var(--navbar-bg)] text-[var(--navbar-text)]"
+      className="bg-white dark:bg-background-dark sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 shadow-sm"
     >
+      {/* Left side – logo + subtitle */}
       <NavbarContent>
         <NavbarMenuToggle
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           className="sm:hidden"
         />
-        <NavbarBrand>
-          <Image src="/images/logo/vidrieria-nino-logo.jpg" alt="Vidriería Niño Logo" width={40} height={40} className="mr-2 rounded-full" />
-          <p className="font-bold text-inherit">Vidriería Niño</p>
+        <NavbarBrand className="flex items-center gap-2">
+          {/* Red‑coral diamond icon (simple SVG) */}
+          <svg
+            className="w-8 h-8 text-coral"
+            viewBox="0 0 48 48"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M24 4C25.78 14.22 33.78 22.22 44 24C33.78 25.78 25.78 33.78 24 44C22.22 33.78 14.22 25.78 4 24C14.22 22.22 22.22 14.22 24 4Z"
+              fill="currentColor"
+            />
+          </svg>
+          <div className="flex flex-col">
+            <p className="text-black font-black text-xl">VIDRIERÍA MONTERO</p>
+            <span className="text-xs text-gray-600">
+              ALTA GAMA &amp; ALUMINIO
+            </span>
+          </div>
         </NavbarBrand>
       </NavbarContent>
-
-      <NavbarContent className="hidden sm:flex gap-4" justify="center">
-        {menuItems.map((item, index) => (
-          <NavbarItem key={`${item.name}-${index}`}>
-            <Link href={item.href} className="hover:text-primary">
+      {/* Center‑right navigation links */}
+      <NavbarContent className="hidden sm:flex gap-6" justify="center">
+        {menuItems.map((item, i) => (
+          <NavbarItem key={i}>
+            <Link
+              href={item.href}
+              className="text-gray-800 hover:text-primary transition-colors"
+            >
               {item.name}
             </Link>
           </NavbarItem>
         ))}
       </NavbarContent>
-      <NavbarContent justify="end">
+      {/* Right side – theme switcher & CTA button */}
+      <NavbarContent justify="end" className="gap-4">
         <NavbarItem className="hidden lg:flex">
-          <ThemeSwitcher />
+          {/* <ThemeSwitcher /> */}
         </NavbarItem>
         <NavbarItem>
           <Link
             href="/admin"
-            className="btn bg-[var(--navbar-btn-bg)] text-[var(--navbar-btn-text)] hover:bg-secondary"
+            className=" bg-primary text-white py-2 px-4 hover:bg-primary/90 rounded"
           >
-            Iniciar Sesión
+            Iniciar Sesion
           </Link>
         </NavbarItem>
       </NavbarContent>
+      {/* Mobile menu */}
       <NavbarMenu>
-        {menuItems.map((item, index) => (
-          <NavbarMenuItem key={`${item.name}-${index}`}>
+        {menuItems.map((item, i) => (
+          <NavbarMenuItem key={i}>
             <Link href={item.href} className="w-full">
               {item.name}
             </Link>

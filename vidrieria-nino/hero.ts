@@ -2,11 +2,19 @@ import { heroui } from "@heroui/react";
 
 // Colores base de tu marca
 const brandColors = {
-  primary: "#507504",
+  primary: "#1E3A8A",
   primaryContent: "#FFFFFF",
-  secondary: "#12144d",
+  secondary: "#1152d4",
   secondaryContent: "#FFFFFF",
   darkBase: "#0a0d25", // Un azul muy oscuro para fondos dark
+
+  // primary: '#1E3A8A',
+  // accent: '#EA580C',
+  // secondary: '#059669',
+  // // 'text-primary': '#374151',
+  // // 'bg-alt': '#F3F4F6',
+
+
 };
 
 export default heroui({
