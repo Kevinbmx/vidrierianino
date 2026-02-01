@@ -20,7 +20,7 @@ export default function Footer() {
             </svg>
             <h2 className="text-xl font-black tracking-tight">VIDRIERÍA MONTERO</h2>
           </div>
-          <p className="text-gray-400 text-sm leading-relaxed">
+          <p className="text-white text-sm leading-relaxed">
             Líderes en carpintería de aluminio y vidrio de alta gama en el Norte
             Integrado de Santa Cruz. Calidad que perdura.
           </p>
@@ -29,7 +29,7 @@ export default function Footer() {
         {/* Column 2 – quick links */}
         <div>
           <h4 className="text-lg font-bold mb-6 text-white">Enlaces Rápidos</h4>
-          <ul className="flex flex-col gap-3 text-sm text-gray-400">
+          <ul className="flex flex-col gap-3 text-sm text-white">
             <li>
               <a href="#nosotros" className="hover:text-primary transition-colors">
                 Nosotros
@@ -56,7 +56,7 @@ export default function Footer() {
         {/* Column 3 – contact */}
         <div>
           <h4 className="text-lg font-bold mb-6 text-white">Contáctenos</h4>
-          <ul className="flex flex-col gap-4 text-sm text-gray-400">
+          <ul className="flex flex-col gap-4 text-sm text-white">
             <li className="flex items-start gap-3">
               <span className="material-symbols-outlined text-primary mt-1">location_on</span>
               Av. Circular, Barrio El Paraíso, Montero
@@ -84,7 +84,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="mt-16 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 font-medium">
+      <div className="mt-16 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white font-medium">
         <p>© 2024 Vidriería de Alta Gama Montero. Todos los derechos reservados.</p>
         <div className="flex gap-6">
           <a href="#" className="hover:text-white transition-colors">

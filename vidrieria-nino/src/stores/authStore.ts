@@ -1,15 +1,15 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import Cookies from 'js-cookie';
-import api, { getCsrfToken } from '@/lib/axios';
 import { User } from '@/types';
+import { authService, LoginCredentials, RegisterData } from '@/features/auth/services/auth.service';
 
 interface AuthState {
     user: User | null;
     isAuthenticated: boolean;
-    login: (credentials: any) => Promise<void>;
-    register: (data: any) => Promise<void>;
-    logout: () => void;
+    login: (credentials: LoginCredentials) => Promise<void>;
+    register: (data: RegisterData) => Promise<void>;
+    logout: () => Promise<void>;
     fetchUser: () => Promise<void>;
     setUser: (user: User | null) => void;
 }
@@ -25,20 +25,18 @@ export const useAuthStore = create<AuthState>()(
             },
 
             login: async (credentials) => {
-                await getCsrfToken();
-                const { data } = await api.post('/api/login', credentials);
+                const data = await authService.login(credentials);
                 Cookies.set('auth_token', data.access_token, { expires: 7, secure: process.env.NODE_ENV === 'production' });
                 set({ user: data.user, isAuthenticated: true });
             },
 
             register: async (userData) => {
-                await getCsrfToken();
-                await api.post('/api/register', userData);
+                await authService.register(userData);
             },
 
             logout: async () => {
                 try {
-                    await api.post('/api/logout');
+                    await authService.logout();
                 } catch (error) {
                     console.error('Logout failed', error);
                 } finally {
@@ -50,8 +48,8 @@ export const useAuthStore = create<AuthState>()(
             fetchUser: async () => {
                 if (Cookies.get('auth_token')) {
                     try {
-                        const { data } = await api.get('/api/user');
-                        set({ user: data, isAuthenticated: true });
+                        const user = await authService.getUser();
+                        set({ user, isAuthenticated: true });
                     } catch (error) {
                         console.error('Failed to fetch user', error);
                         Cookies.remove('auth_token');
@@ -64,7 +62,7 @@ export const useAuthStore = create<AuthState>()(
         }),
         {
             name: 'auth-storage',
-            storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
+            storage: createJSONStorage(() => sessionStorage),
         }
     )
 );

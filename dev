@@ -1,0 +1,7 @@
+#!/bin/bash
+case $1 in
+  artisan)  docker exec -it vidrierianinoback php artisan "${@:2}" ;;
+  composer) docker exec -it vidrierianinoback composer "${@:2}" ;;
+  npm-dev)  docker exec -it vidrierianinofront npm "${@:2}" ;;
+  *)        echo "Comando no reconocido. Usa: artisan, composer o npm-dev" ;;
+esac

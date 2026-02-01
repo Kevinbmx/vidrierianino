@@ -5,7 +5,7 @@
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
-import PermissionGuard from '@/components/auth/PermissionGuard';
+import PermissionGuard from '@/features/auth/components/PermissionGuard';
 import { Button } from '@heroui/react';
 
 export default function AdminPage() {
@@ -18,7 +18,7 @@ export default function AdminPage() {
                 <h1 className="text-2xl font-bold">Admin Dashboard</h1>
                 <Button onClick={logout} color="danger">Logout</Button>
             </header>
-            
+
             <div className="space-y-4">
                 <p>Welcome, {user?.name || user?.email || 'User'}!</p>
                 <p>Your roles: {user?.roles.map(r => r.name).join(', ')}</p>
@@ -38,7 +38,7 @@ export default function AdminPage() {
                 </PermissionGuard>
 
                 {hasRole('super-admin') && (
-                     <div className="p-4 border rounded-lg bg-primary-50 text-primary-600">
+                    <div className="p-4 border rounded-lg bg-primary-50 text-primary-600">
                         <h2 className="text-xl">Super Admin Area</h2>
                         <p>You see this because you are a Super Admin.</p>
                     </div>

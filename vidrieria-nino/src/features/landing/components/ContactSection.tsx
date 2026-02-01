@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import { AiOutlineSend } from "react-icons/ai";
 
 export default function ContactSection() {
   return (
@@ -73,7 +74,7 @@ export default function ContactSection() {
               </div>
               <button className="w-full bg-primary text-white font-black py-4 rounded-lg shadow-lg shadow-primary/30 flex items-center justify-center gap-3 hover:-translate-y-1 transition-all">
                 ENVIAR SOLICITUD DE COTIZACIÓN
-                <span className="material-symbols-outlined">arrow_forward</span>
+                <AiOutlineSend />
               </button>
             </form>
           </div>

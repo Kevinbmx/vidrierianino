@@ -5,29 +5,27 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\UserResource;
+use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
+    protected $authService;
+
+    public function __construct(AuthService $authService)
+    {
+        $this->authService = $authService;
+    }
+
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-        ]);
-
-        $user->assignRole('cliente');
+        $user = $this->authService->register($request->validated());
 
         return response()->json([
             'message' => 'User registered successfully',
-            'user' => $user
+            'user' => new UserResource($user)
         ], 201);
     }
 
@@ -38,45 +36,24 @@ class AuthController extends Controller
             'password' => $request->password,
         ];
 
-        if (!Auth::attempt($credentials)) {
-            throw ValidationException::withMessages([
-                'login' => [__('auth.failed')],
-            ]);
-        }
+        $data = $this->authService->login($credentials, $request->getLoginField());
 
-        $user = $request->user();
-
-        if (!$user->is_active) {
-            Auth::logout();
-            return response()->json(['message' => 'Your account is inactive.'], 403);
-        }
-
-        $token = $user->createToken('auth-token')->plainTextToken;
-
-        return $this->respondWithToken($token, $user);
+        return response()->json([
+            'access_token' => $data['token'],
+            'token_type' => 'bearer',
+            'user' => new UserResource($data['user'])
+        ]);
     }
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $this->authService->logout($request->user());
 
         return response()->json(['message' => 'Logged out successfully']);
     }
 
-    public function user(Request $request): JsonResponse
+    public function user(Request $request): UserResource
     {
-        $user = $request->user();
-        $user->load('roles:name', 'permissions:name');
-        return response()->json($user);
-    }
-
-    protected function respondWithToken(string $token, User $user): JsonResponse
-    {
-        $user->load('roles:name', 'permissions:name');
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'user' => $user
-        ]);
+        return new UserResource($request->user());
     }
 }
