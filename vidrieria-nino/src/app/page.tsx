@@ -6,6 +6,7 @@ import Navbar from "../features/landing/components/Navbar";
 import ServicesSection from "../features/landing/components/ServicesSection";
 import SimuladorSection from "../features/landing/components/SimuladorSection";
 import FAQSection from "../features/landing/components/FAQSection";
+import { IntelligentContactForm } from "../features/leads/components/IntelligentContactForm";
 
 export default function Home() {
   return (
@@ -15,7 +16,8 @@ export default function Home() {
       <ServicesSection />
       <GallerySection />
       {/* <SimuladorSection /> */}
-      <ContactSection />
+      {/* <ContactSection /> */}
+      <IntelligentContactForm />.
       <FAQSection />
       <Footer />
     </>

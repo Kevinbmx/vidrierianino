@@ -30,7 +30,7 @@ services:
       DB_DATABASE: vidrierianino_db
       DB_USERNAME: shared_user
       DB_PASSWORD: secret
-   
+
 networks:
   vidrierianino-network:
     driver: bridge

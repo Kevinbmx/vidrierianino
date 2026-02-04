@@ -15,8 +15,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products', function () {
         return response()->json(['message' => 'You can see products']);
     })->middleware('permission:ver-productos');
-// Rutas para la gestion de imagenes
+    // Rutas para la gestion de imagenes
     Route::apiResource('images', App\Http\Controllers\ImageController::class)->except(['show']);
 });
+
+// Admin Lead Management (Temporarily Public for Testing)
+Route::get('/leads', [App\Http\Controllers\LeadController::class, 'index']);
+Route::patch('/leads/{lead}/status', [App\Http\Controllers\LeadController::class, 'updateStatus']);
+
+// Public Lead Capture
+Route::post('/leads', [App\Http\Controllers\LeadController::class, 'store']);
 
 Route::post('/contact', [App\Http\Controllers\MailController::class, 'send']);
