@@ -20,8 +20,8 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'is_active' => (bool) $this->is_active,
-            'roles' => $this->getRoleNames(),
-            'permissions' => $this->getAllPermissions()->pluck('name'),
+            'roles' => $this->roles->map(fn($role) => ['name' => $role->name]),
+            'permissions' => $this->permissions->map(fn($perm) => ['name' => $perm->name]),
             'created_at' => $this->created_at->toIso8601String(),
         ];
     }

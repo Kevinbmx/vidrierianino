@@ -21,7 +21,7 @@ export default function AdminPage() {
 
             <div className="space-y-4">
                 <p>Welcome, {user?.name || user?.email || 'User'}!</p>
-                <p>Your roles: {user?.roles.map(r => r.name).join(', ')}</p>
+                <p>Your roles: {user?.roles?.map(r => r.name).join(', ')}</p>
 
                 <PermissionGuard permissions="ver-usuarios">
                     <div className="p-4 border rounded-lg bg-default-100">

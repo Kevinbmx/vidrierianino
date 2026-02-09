@@ -5,12 +5,15 @@ description: Define el estándar de arquitectura para el frontend en Next.js den
 
 # Next.js Enterprise Pattern
 
-Sigue este flujo para componentes y datos:
-
 ## Organización de Archivos
-- **UI Components**: `src/components/ui` (componentes sin lógica, solo diseño).
-- **Features**: `src/features/{feature-name}` (contiene hooks, componentes de negocio y servicios propios).
+- **Features (`src/features/`)**: Estructura por dominio (ej. `features/quoting`, `features/inventory`). Cada una con sus propios hooks y servicios.
+- **UI (`src/components/ui`)**: Componentes atómicos (botones, inputs) basados en Shadcn/UI si es posible.
 
-## Manejo de Datos
-- **TanStack Query**: Obligatorio para fetching de datos de la API de Laravel.
-- **TypeScript**: Define interfaces para cada modelo del backend en un archivo `types.ts` dentro de la feature correspondiente.
+## Manejo de Datos y Estado
+- **TanStack Query**: Obligatorio. Usa `useQuery` para obtener materiales y `useMutation` para crear presupuestos.
+- **Zod**: Todas las interfaces de TypeScript deben tener una validación de esquema correspondiente con Zod para los formularios.
+- **Type Safety**: Crea `src/types/api.d.ts` para espejar los modelos de Laravel.
+
+## Reglas de Interfaz
+- **Mobile First**: El personal de la vidriería usará tablets o celulares. Diseña con Tailwind pensando en táctil.
+- **Optimistic Updates**: Al cambiar el estado de un pedido (ej. de "Pendiente" a "Cortado"), actualiza la UI antes de que termine la petición.

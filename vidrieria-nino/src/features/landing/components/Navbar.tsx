@@ -23,7 +23,7 @@ export default function App() {
   return (
     <Navbar
       onMenuOpenChange={setIsMenuOpen}
-      className="bg-white dark:bg-background-dark sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 shadow-sm"
+      className="bg-white dark:bg-background-dark border-b border-gray-200 dark:border-gray-800 shadow-sm"
     >
       {/* Left side – logo + subtitle */}
       <NavbarContent>

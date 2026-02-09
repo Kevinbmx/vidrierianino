@@ -1,55 +1,64 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useLeads, useUpdateLeadStatus } from '@/features/leads/api/leads';
+import { useLeads, useUpdateStatus } from '@/features/leads/api/leads';
 import { Lead } from '@/features/leads/types';
 import { LeadStatusBadge } from '@/features/leads/components/LeadStatusBadge';
+import { LeadDetailsModal } from '@/features/leads/components/LeadDetailsModal';
 
 export default function AdminLeadsPage() {
     const { data: leads, isLoading, error } = useLeads();
-    const { mutate: updateStatus } = useUpdateLeadStatus();
+    const { mutate: updateStatus } = useUpdateStatus();
     const [filterLocal, setFilterLocal] = useState<boolean | null>(null);
+    const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
 
-    const filteredLeads = leads?.filter(lead => {
+    const filteredLeads = leads?.filter((lead: Lead) => {
         if (filterLocal === null) return true;
         return lead.is_local === filterLocal;
     });
 
     const handleStatusChange = (lead: Lead, newStatus: string) => {
         if (confirm(`¿Cambiar estado de ${lead.name} a ${newStatus}?`)) {
-            updateStatus({ id: lead.id, status: newStatus });
+            const status = newStatus as Lead['status'];
+            updateStatus({ id: lead.id, data: { status } });
         }
     };
 
-    if (isLoading) return <div className="p-8 text-center">Cargando leads...</div>;
-    if (error) return <div className="p-8 text-center text-red-500">Error al cargar leads</div>;
+    if (isLoading) return <div className="p-8 text-center flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2">Cargando leads...</span>
+    </div>;
+
+    if (error) return <div className="p-8 text-center text-red-500 bg-red-50 rounded-lg m-4 border border-red-200">
+        Error al cargar leads. Por favor intente recargar la página.
+    </div>;
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-6">Gestión de Leads</h1>
+            <h1 className="text-2xl font-bold mb-6 text-gray-800">Gestión de Leads</h1>
 
             <div className="mb-6 flex gap-4">
                 <button
                     onClick={() => setFilterLocal(null)}
-                    className={`px-4 py-2 rounded-lg ${filterLocal === null ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterLocal === null ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
                 >
                     Todos
                 </button>
                 <button
                     onClick={() => setFilterLocal(true)}
-                    className={`px-4 py-2 rounded-lg ${filterLocal === true ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterLocal === true ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
                 >
                     Locales (Montero)
                 </button>
                 <button
                     onClick={() => setFilterLocal(false)}
-                    className={`px-4 py-2 rounded-lg ${filterLocal === false ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterLocal === false ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
                 >
                     Remotos (Otros)
                 </button>
             </div>
 
-            <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+            <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg bg-white">
                 <table className="min-w-full divide-y divide-gray-300">
                     <thead className="bg-gray-50">
                         <tr>
@@ -64,7 +73,7 @@ export default function AdminLeadsPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
                         {filteredLeads?.map((lead) => (
-                            <tr key={lead.id} className={!lead.is_local ? 'bg-yellow-50' : ''}>
+                            <tr key={lead.id} className={`hover:bg-gray-50 transition-colors ${!lead.is_local ? 'bg-yellow-50/30' : ''}`}>
                                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                     {new Date(lead.created_at).toLocaleDateString()}
                                 </td>
@@ -91,28 +100,20 @@ export default function AdminLeadsPage() {
                                 </td>
                                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                     <div className="flex gap-2">
-                                        {lead.is_local && lead.status !== 'visit_scheduled' && (
+                                        <button
+                                            onClick={() => setSelectedLeadId(lead.id)}
+                                            className="text-indigo-600 hover:text-indigo-900 text-xs border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 rounded px-3 py-1 font-medium"
+                                        >
+                                            Ver Detalles / Historia
+                                        </button>
+
+                                        {/* Quick Actions kept for convenience */}
+                                        {lead.status === 'new' && (
                                             <button
-                                                onClick={() => handleStatusChange(lead, 'visit_scheduled')}
-                                                className="text-blue-600 hover:text-blue-900 text-xs border border-blue-200 rounded px-2 py-1"
+                                                onClick={() => handleStatusChange(lead, 'contacted')}
+                                                className="text-yellow-600 hover:text-yellow-900 text-xs border border-yellow-200 bg-yellow-50 hover:bg-yellow-100 rounded px-2 py-1"
                                             >
-                                                Agendar Visita
-                                            </button>
-                                        )}
-                                        {!lead.is_local && lead.status !== 'video_call_scheduled' && (
-                                            <button
-                                                onClick={() => handleStatusChange(lead, 'video_call_scheduled')}
-                                                className="text-purple-600 hover:text-purple-900 text-xs border border-purple-200 rounded px-2 py-1"
-                                            >
-                                                Agendar Video
-                                            </button>
-                                        )}
-                                        {lead.status !== 'closed' && (
-                                            <button
-                                                onClick={() => handleStatusChange(lead, 'closed')}
-                                                className="text-gray-600 hover:text-gray-900 text-xs hover:bg-gray-100 rounded px-2 py-1"
-                                            >
-                                                Cerrar
+                                                Marcar Contactado
                                             </button>
                                         )}
                                     </div>
@@ -122,6 +123,13 @@ export default function AdminLeadsPage() {
                     </tbody>
                 </table>
             </div>
+
+            {selectedLeadId && (
+                <LeadDetailsModal
+                    leadId={selectedLeadId}
+                    onClose={() => setSelectedLeadId(null)}
+                />
+            )}
         </div>
     );
 }
