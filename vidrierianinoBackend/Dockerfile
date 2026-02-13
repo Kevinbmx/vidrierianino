@@ -5,7 +5,7 @@ WORKDIR /var/www
 COPY cacert.pem /etc/ssl/certs/cacert.pem
 COPY extra.ini /usr/local/etc/php/conf.d/99-custom.ini
 
-RUN apt-get update && apt-get install -y libpq-dev unzip curl &&     docker-php-ext-install pdo pdo_mysql
+RUN apt-get update && apt-get install -y libpq-dev unzip curl &&     docker-php-ext-install pdo pdo_mysql bcmath
 
 
 COPY . .

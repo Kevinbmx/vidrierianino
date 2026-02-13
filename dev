@@ -8,23 +8,23 @@ print_style() {
 case $1 in
   artisan)
     print_style "Running php artisan..."
-    docker exec -it vidrierianinoback php artisan "${@:2}"
+    docker exec -i vidrierianinoback php artisan "${@:2}"
     ;;
   composer)
     print_style "Running composer..."
-    docker exec -it vidrierianinoback composer "${@:2}"
+    docker exec -i vidrierianinoback composer "${@:2}"
     ;;
   npm)
     print_style "Running npm in frontend..."
-    docker exec -it vidrierianinofront npm "${@:2}"
+    docker exec -i vidrierianinofront npm "${@:2}"
     ;;
   test)
     print_style "Running tests..."
-    docker exec -it vidrierianinoback php artisan test
+    docker exec -i vidrierianinoback php artisan test
     ;;
   migrate)
     print_style "Fresh migration and seed..."
-    docker exec -it vidrierianinoback php artisan migrate:fresh --seed
+    docker exec -i vidrierianinoback php artisan migrate:fresh --seed
     ;;
   *)
     echo "Uso: ./dev {artisan|composer|npm|test|migrate}"

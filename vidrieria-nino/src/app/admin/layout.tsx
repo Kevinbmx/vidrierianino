@@ -36,9 +36,44 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="w-64 bg-slate-900 text-white p-4 flex-shrink-0">
         <h2 className="text-xl font-bold mb-8 px-2">Vidriería Nino</h2>
         <nav>
-          <ul className="space-y-2">
-            <li><a href="/admin" className="block py-2 px-3 rounded hover:bg-slate-800 transition-colors">Dashboard</a></li>
-            <li><a href="/admin/leads" className="block py-2 px-3 rounded hover:bg-slate-800 transition-colors">Leads</a></li>
+          <ul className="space-y-4">
+            <li>
+              <a href="/admin" className="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-800 transition-colors">
+                <span>📊</span> Dashboard
+              </a>
+            </li>
+
+            <li className="pt-2">
+              <span className="text-xs uppercase text-slate-500 font-bold px-3">Gestión Comercial</span>
+              <ul className="mt-2 space-y-1">
+                <li>
+                  <a href="/admin/leads" className="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-800 transition-colors text-sm">
+                    <span>📞</span> Leads / Contactos
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            <li className="pt-2">
+              <span className="text-xs uppercase text-slate-500 font-bold px-3">Catálogo</span>
+              <ul className="mt-2 space-y-1">
+                <li>
+                  <a href="/admin/catalog" className="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-800 transition-colors text-sm">
+                    <span>📦</span> Productos
+                  </a>
+                </li>
+                <li>
+                  <a href="/admin/catalog/suppliers" className="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-800 transition-colors text-sm">
+                    <span>🏭</span> Proveedores
+                  </a>
+                </li>
+                <li>
+                  <a href="/admin/catalog/offers" className="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-800 transition-colors text-sm">
+                    <span>💲</span> Ofertas y Precios
+                  </a>
+                </li>
+              </ul>
+            </li>
           </ul>
         </nav>
       </aside>

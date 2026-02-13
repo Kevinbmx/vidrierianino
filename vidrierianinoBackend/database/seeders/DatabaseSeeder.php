@@ -14,5 +14,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(RolesAndPermissionsSeeder::class);
+
+        // Módulo 1: Core de Catálogo y UOM
+        $this->call(UnitsOfMeasureSeeder::class);
+        $this->call(CatalogSeeder::class);
     }
 }
