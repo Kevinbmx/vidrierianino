@@ -36,6 +36,13 @@ class SupplierController extends Controller
             ? $this->supplierService->getAllActive()
             : $this->supplierService->getAll();
 
+        $suppliers->load([
+            'contacts' => fn($q) => $q->where('is_primary', true),
+            'branches' => fn($q) => $q->where('is_main', true),
+        ]);
+
+        $suppliers->loadCount('productOffers');
+
         return SupplierResource::collection($suppliers);
     }
 
@@ -51,12 +58,15 @@ class SupplierController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'contact_name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'address' => 'nullable|string',
+            'rif' => 'nullable|string|max:20',
+            'payment_terms' => 'nullable|string|max:100',
+            'website' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
+            'contact_name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string|max:255',
         ]);
 
         $supplier = $this->supplierService->create($validated);
@@ -74,8 +84,14 @@ class SupplierController extends Controller
      */
     public function show(Supplier $supplier): SupplierResource
     {
-        // Cargar conteo de ofertas
-        $supplier->loadCount('productOffers');
+        $supplier->loadCount('productOffers')
+            ->load([
+                'contacts',
+                'productOffers' => fn($q) => $q->where('is_active', true)
+                    ->orderBy('is_preferred', 'desc'),
+                'productOffers.productVariant.product',
+                'productOffers.productVariant.saleUnit',
+            ]);
 
         return new SupplierResource($supplier);
     }
@@ -93,10 +109,9 @@ class SupplierController extends Controller
     {
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'contact_name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'address' => 'nullable|string',
+            'rif' => 'nullable|string|max:20',
+            'payment_terms' => 'nullable|string|max:100',
+            'website' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
         ]);

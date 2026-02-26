@@ -47,6 +47,22 @@ class StoreProductVariantRequest extends FormRequest
             'attribute_values' => 'nullable|array',
             'attribute_values.*' => 'exists:attribute_values,id',
 
+            // New: Packagings
+            'packagings' => 'nullable|array',
+            'packagings.*.name' => 'required|string|max:50',
+            'packagings.*.quantity' => 'required|numeric|min:0.0001',
+            'packagings.*.description' => 'nullable|string|max:255',
+            'packagings.*.is_default_purchase' => 'nullable|boolean',
+
+            // New: Dimensions (Multi-Format)
+            'dimensions' => 'nullable|array',
+            'dimensions.*.name' => 'nullable|string|max:50',
+            'dimensions.*.width' => 'nullable|numeric|min:0',
+            'dimensions.*.height' => 'nullable|numeric|min:0',
+            'dimensions.*.length' => 'nullable|numeric|min:0',
+            'dimensions.*.weight' => 'nullable|numeric|min:0',
+            'dimensions.*.is_default' => 'nullable|boolean',
+
             'is_active' => 'nullable|boolean',
         ];
     }

@@ -7,7 +7,9 @@ import {
     Supplier,
     SupplierProductOffer,
     PaginatedResponse,
-    SingleResponse
+    SingleResponse,
+    PackagingType,
+    DimensionTemplate
 } from './types';
 
 // Utilizamos la instancia central de Axios que ya maneja la autenticación y tokens
@@ -169,5 +171,66 @@ export const catalogApi = {
     markOfferPreferred: async (offerId: number): Promise<SingleResponse<SupplierProductOffer>> => {
         const response = await api.post(`/api/offers/${offerId}/mark-preferred`);
         return response.data;
-    }
-};
+    },
+
+    // Templates (Efficiency)
+    getPackagingTypes: async (): Promise<SingleResponse<PackagingType[]>> => {
+        const response = await api.get('/api/packaging-types');
+        return response.data;
+    },
+
+    getDimensionTemplates: async (type?: string): Promise<SingleResponse<DimensionTemplate[]>> => {
+        const response = await api.get('/api/dimension-templates', { params: { type } });
+        return response.data;
+    },
+
+    // Supplier Contacts
+    getSupplierContacts: async (supplierId: number) => {
+        const response = await api.get(`/api/suppliers/${supplierId}/contacts`);
+        return response.data;
+    },
+
+    createSupplierContact: async (supplierId: number, data: any) => {
+        const response = await api.post(`/api/suppliers/${supplierId}/contacts`, data);
+        return response.data;
+    },
+
+    updateSupplierContact: async (supplierId: number, contactId: number, data: any) => {
+        const response = await api.put(`/api/suppliers/${supplierId}/contacts/${contactId}`, data);
+        return response.data;
+    },
+
+    deleteSupplierContact: async (supplierId: number, contactId: number) => {
+        await api.delete(`/api/suppliers/${supplierId}/contacts/${contactId}`);
+    },
+
+    setSupplierContactPrimary: async (supplierId: number, contactId: number) => {
+        const response = await api.post(`/api/suppliers/${supplierId}/contacts/${contactId}/set-primary`);
+        return response.data;
+    },
+
+    // Supplier Branches
+    getSupplierBranches: async (supplierId: number) => {
+        const response = await api.get(`/api/suppliers/${supplierId}/branches`);
+        return response.data;
+    },
+
+    createSupplierBranch: async (supplierId: number, data: any) => {
+        const response = await api.post(`/api/suppliers/${supplierId}/branches`, data);
+        return response.data;
+    },
+
+    updateSupplierBranch: async (supplierId: number, branchId: number, data: any) => {
+        const response = await api.put(`/api/suppliers/${supplierId}/branches/${branchId}`, data);
+        return response.data;
+    },
+
+    deleteSupplierBranch: async (supplierId: number, branchId: number) => {
+        await api.delete(`/api/suppliers/${supplierId}/branches/${branchId}`);
+    },
+
+    setSupplierBranchMain: async (supplierId: number, branchId: number) => {
+        const response = await api.post(`/api/suppliers/${supplierId}/branches/${branchId}/set-main`);
+        return response.data;
+    },
+}

@@ -40,6 +40,7 @@ class SupplierProductOfferResource extends JsonResource
             'is_preferred' => $this->is_preferred,
             'is_active' => $this->is_active,
             'notes' => $this->notes,
+            'document_url' => $this->document_url,
 
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),

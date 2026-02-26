@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 /**
@@ -26,24 +27,77 @@ class SupplierProductOffer extends Model
     protected $fillable = [
         'supplier_id',
         'product_variant_id',
+        'supplier_sku', // Nuevo
         'cost',
         'purchase_unit_id',
+        'pack_quantity', // Nuevo: Factor de empaque (ej: 30 planchas en 1 caja)
         'purchase_width',
         'purchase_height',
         'purchase_length',
         'is_preferred',
         'is_active',
-        'notes'
+        'notes',
+        'delivery_days' // Nuevo
     ];
 
     protected $casts = [
         'cost' => 'decimal:4',
+        'pack_quantity' => 'decimal:2',
         'purchase_width' => 'decimal:4',
         'purchase_height' => 'decimal:4',
         'purchase_length' => 'decimal:4',
         'is_preferred' => 'boolean',
         'is_active' => 'boolean',
+        'delivery_days' => 'integer',
     ];
+
+    // ... (relaciones)
+
+    /**
+     * Calcula el costo por unidad base normalizada.
+     * 
+     * Lógica Avanzada (Logística):
+     * 1. Normaliza el costo unitario real dividiendo por el Pack Quantity.
+     *    (Ej: Costo Caja $1500 / 30 planchas = $50 por plancha).
+     * 2. Si la unidad de compra es dimensional (m² o ml), divide por la dimensión.
+     *    (Ej: $50 por plancha / (2.44*1.83 m²) = $11.19/m²).
+     */
+    protected function baseUnitCost(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                // 1. Obtener Costo Unitario Real (por item base)
+                $packQty = $this->pack_quantity > 0 ? $this->pack_quantity : 1;
+                $unitCost = bcdiv((string) $this->cost, (string) $packQty, 4);
+
+                // Si no hay unidad de compra cargada, retornar el costo unitario
+                if (!$this->purchaseUnit) {
+                    return $unitCost;
+                }
+
+                // Caso 1: Unidad de ÁREA (m²)
+                if ($this->purchaseUnit->isArea() && $this->purchase_width && $this->purchase_height) {
+                    $area = bcmul((string) $this->purchase_width, (string) $this->purchase_height, 4);
+
+                    if (bccomp($area, '0', 4) === 0)
+                        return $unitCost;
+
+                    return bcdiv($unitCost, $area, 4);
+                }
+
+                // Caso 2: Unidad de LONGITUD (metro lineal)
+                if ($this->purchaseUnit->isLength() && $this->purchase_length) {
+                    if (bccomp((string) $this->purchase_length, '0', 4) === 0)
+                        return $unitCost;
+
+                    return bcdiv($unitCost, (string) $this->purchase_length, 4);
+                }
+
+                // Caso 3: Unidad SIMPLE
+                return $unitCost;
+            }
+        );
+    }
 
     // ========== RELACIONES ==========
 
@@ -77,60 +131,19 @@ class SupplierProductOffer extends Model
         return $this->belongsTo(UnitOfMeasure::class, 'purchase_unit_id');
     }
 
+    /**
+     * Historial de cambios de esta oferta.
+     * 
+     * @return HasMany
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(SupplierProductOfferHistory::class);
+    }
+
     // ========== ATRIBUTOS CALCULADOS (ACCESSORS) ==========
 
-    /**
-     * Calcula el costo por unidad base según las dimensiones físicas.
-     * 
-     * Impacto en el negocio: Permite comparar proveedores que venden
-     * en diferentes formatos normalizando a la misma unidad de medida.
-     * 
-     * Lógica de cálculo:
-     * - Área (m²): costo / (ancho * alto)
-     * - Longitud (metro lineal): costo / largo
-     * - Unidad: costo / 1 (sin normalización)
-     * 
-     * Usa bcmath para precisión decimal exacta.
-     * 
-     * @return Attribute
-     */
-    protected function baseUnitCost(): Attribute
-    {
-        return Attribute::make(
-            get: function () {
-                // Si no hay unidad de compra cargada, retornar el costo directo
-                if (!$this->purchaseUnit) {
-                    return $this->cost;
-                }
 
-                // Caso 1: Unidad de ÁREA (m²)
-                if ($this->purchaseUnit->isArea() && $this->purchase_width && $this->purchase_height) {
-                    $area = bcmul((string) $this->purchase_width, (string) $this->purchase_height, 4);
-
-                    // Evitar división por cero
-                    if (bccomp($area, '0', 4) === 0) {
-                        return $this->cost;
-                    }
-
-                    return bcdiv((string) $this->cost, $area, 4);
-                }
-
-                // Caso 2: Unidad de LONGITUD (metro lineal)
-                if ($this->purchaseUnit->isLength() && $this->purchase_length) {
-                    // Evitar división por cero
-                    if (bccomp((string) $this->purchase_length, '0', 4) === 0) {
-                        return $this->cost;
-                    }
-
-                    return bcdiv((string) $this->cost, (string) $this->purchase_length, 4);
-                }
-
-                // Caso 3: Unidad SIMPLE (ej: tornillos, paquetes)
-                // El costo ya es por unidad, no requiere normalización
-                return $this->cost;
-            }
-        );
-    }
 
     /**
      * Calcula el área total de la plancha/pieza (si aplica).

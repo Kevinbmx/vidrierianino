@@ -37,27 +37,42 @@ class ProductController extends Controller
      */
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = Product::with(['category', 'variants.saleUnit'])
+        // Eager loading completo para evitar N+1 en el dashboard de inventario.
+        // inventoryBatches: necesario para calcular total_abstract_stock e inventory_valuation
+        // saleUnit: requerido para saber el tipo de unidad (area/length/weight/unit)
+        $query = Product::with([
+            'category',
+            'variants.saleUnit',
+            'variants.inventoryBatches', // 🔥 Carga lotes para cálculo de stock dinámico
+            'variants.supplierOffers',   // Para calcular inventory_valuation
+        ])
             ->where('is_active', true);
 
-        // Filtrar por categoría si se proporciona
-        if ($request->has('category_id')) {
+        // Filtrar por categoría
+        if ($request->has('category_id') && $request->category_id) {
             $query->where('category_id', $request->category_id);
         }
 
-        // Filtrar por búsqueda
-        if ($request->has('search')) {
+        // Búsqueda por nombre, descripción, o SKU de variante
+        if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('variants', fn($vq) => $vq->where('sku', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%"));
             });
         }
+
+        // Filtro de stock bajo: solo productos donde al menos una variante está en alerta
+        // El filtro final de "is_low_stock" se hace en el Resource/frontend ya que es calculado
+        // Aquí simplemente se pasa el parámetro para que el frontend filtre
 
         $products = $query->paginate($request->get('per_page', 20));
 
         return ProductResource::collection($products);
     }
+
 
     /**
      * Store a newly created product with variants.
@@ -87,7 +102,9 @@ class ProductController extends Controller
         $product->load([
             'category',
             'variants.saleUnit',
-            'variants.attributeValues.attribute'
+            'variants.attributeValues.attribute',
+            'variants.dimensions',
+            'variants.packagings'
         ]);
 
         return new ProductResource($product);

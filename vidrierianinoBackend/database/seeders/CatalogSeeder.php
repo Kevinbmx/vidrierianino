@@ -9,223 +9,202 @@ use App\Models\ProductVariant;
 use App\Models\Attribute;
 use App\Models\AttributeValue;
 use App\Models\UnitOfMeasure;
+use App\Models\Supplier;
+use App\Models\SupplierProductOffer;
+use Illuminate\Support\Facades\DB;
 
 /**
  * CatalogSeeder
  * 
  * Crea la estructura completa del catálogo con datos reales de Vidriería Niño:
+ * 
  * - Categorías jerárquicas
  * - Atributos y valores
  * - Productos con variantes reales
+ * - Proveedores y ofertas de compra
  * 
- * Ejemplos incluidos:
- * 1. Vidrio Float 5mm (plancha 2.14×3.30 → venta por m²)
- * 2. Varilla Madera Pino (paquete 30un × 1.9m → venta por ml)
- * 3. Perfil Aluminio (barra 6m → venta por ml)
+ * UPDATED (2026-02-13): Adaptado para pricing flexible y supplier_product_offers
  */
 class CatalogSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $this->command->info('🚀 Iniciando seeder de catálogo...');
 
-        // ========== CATEGORÍAS ==========
-        $this->command->info('📁 Creando categorías...');
+        DB::transaction(function () {
+            // ========== PROVEEDOR DEFAULT ==========
+            $supplier = Supplier::create([
+                'name' => 'Proveedor General',
+                'contact_name' => 'Ventas Mayorista',
+                'phone' => '+591 70000000',
+                'email' => 'ventas@proveedor.com',
+                'is_active' => true,
+            ]);
 
-        $vidrios = Category::create(['name' => 'Vidrios', 'slug' => 'vidrios', 'order' => 1]);
-        $vidriosPlanos = Category::create(['name' => 'Vidrios Planos', 'slug' => 'vidrios-planos', 'parent_id' => $vidrios->id, 'order' => 1]);
-        $vidriosTemplados = Category::create(['name' => 'Vidrios Templados', 'slug' => 'vidrios-templados', 'parent_id' => $vidrios->id, 'order' => 2]);
-        $espejos = Category::create(['name' => 'Espejos', 'slug' => 'espejos', 'parent_id' => $vidrios->id, 'order' => 3]);
+            // ========== CATEGORÍAS ==========
+            $this->command->info('📁 Creando categorías...');
 
-        $perfiles = Category::create(['name' => 'Perfiles y Varillas', 'slug' => 'perfiles-varillas', 'order' => 2]);
-        $madera = Category::create(['name' => 'Madera', 'slug' => 'madera', 'parent_id' => $perfiles->id, 'order' => 1]);
-        $aluminio = Category::create(['name' => 'Aluminio', 'slug' => 'aluminio', 'parent_id' => $perfiles->id, 'order' => 2]);
+            $vidrios = Category::create(['name' => 'Vidrios', 'slug' => 'vidrios', 'order' => 1]);
+            $vidriosPlanos = Category::create(['name' => 'Vidrios Planos', 'slug' => 'vidrios-planos', 'parent_id' => $vidrios->id, 'order' => 1]);
+            $vidriosTemplados = Category::create(['name' => 'Vidrios Templados', 'slug' => 'vidrios-templados', 'parent_id' => $vidrios->id, 'order' => 2]);
+            $espejos = Category::create(['name' => 'Espejos', 'slug' => 'espejos', 'parent_id' => $vidrios->id, 'order' => 3]);
 
-        $this->command->info('✅ 7 categorías creadas');
+            $perfiles = Category::create(['name' => 'Perfiles y Varillas', 'slug' => 'perfiles-varillas', 'order' => 2]);
+            $madera = Category::create(['name' => 'Madera', 'slug' => 'madera', 'parent_id' => $perfiles->id, 'order' => 1]);
+            $aluminio = Category::create(['name' => 'Aluminio', 'slug' => 'aluminio', 'parent_id' => $perfiles->id, 'order' => 2]);
 
-        // ========== ATRIBUTOS ==========
-        $this->command->info('🏷️  Creando atributos...');
+            // ========== ATRIBUTOS ==========
+            $this->command->info('🏷️  Creando atributos...');
 
-        $grosor = Attribute::create(['name' => 'Grosor', 'slug' => 'grosor', 'input_type' => 'select']);
-        $color = Attribute::create(['name' => 'Color', 'slug' => 'color', 'input_type' => 'select']);
-        $material = Attribute::create(['name' => 'Material', 'slug' => 'material', 'input_type' => 'select']);
-        $acabado = Attribute::create(['name' => 'Acabado', 'slug' => 'acabado', 'input_type' => 'select']);
+            $grosor = Attribute::create(['name' => 'Grosor', 'slug' => 'grosor', 'input_type' => 'select']);
+            $color = Attribute::create(['name' => 'Color', 'slug' => 'color', 'input_type' => 'select']);
+            $material = Attribute::create(['name' => 'Material', 'slug' => 'material', 'input_type' => 'select']);
+            $acabado = Attribute::create(['name' => 'Acabado', 'slug' => 'acabado', 'input_type' => 'select']);
 
-        // Valores de Grosor
-        $grosor5mm = AttributeValue::create(['attribute_id' => $grosor->id, 'value' => '5mm']);
-        $grosor6mm = AttributeValue::create(['attribute_id' => $grosor->id, 'value' => '6mm']);
-        $grosor8mm = AttributeValue::create(['attribute_id' => $grosor->id, 'value' => '8mm']);
+            // Valores
+            $grosor5mm = AttributeValue::create(['attribute_id' => $grosor->id, 'value' => '5mm']);
+            $grosor6mm = AttributeValue::create(['attribute_id' => $grosor->id, 'value' => '6mm']);
+            $transparente = AttributeValue::create(['attribute_id' => $color->id, 'value' => 'Transparente']);
+            $pino = AttributeValue::create(['attribute_id' => $material->id, 'value' => 'Pino']);
+            $natural = AttributeValue::create(['attribute_id' => $acabado->id, 'value' => 'Natural']);
+            $anodizado = AttributeValue::create(['attribute_id' => $acabado->id, 'value' => 'Anodizado']);
 
-        // Valores de Color
-        $transparente = AttributeValue::create(['attribute_id' => $color->id, 'value' => 'Transparente']);
-        $ahumado = AttributeValue::create(['attribute_id' => $color->id, 'value' => 'Ahumado']);
-        $bronce = AttributeValue::create(['attribute_id' => $color->id, 'value' => 'Bronce']);
+            // ========== UNIDADES DE MEDIDA ==========
+            $m2 = UnitOfMeasure::where('abbreviation', 'm²')->first();
+            $ml = UnitOfMeasure::where('abbreviation', 'ml')->first();
+            $plancha = UnitOfMeasure::where('abbreviation', 'plancha')->first();
+            $paquete = UnitOfMeasure::where('abbreviation', 'paq')->first();
+            $barra = UnitOfMeasure::where('abbreviation', 'barra')->first();
 
-        // Valores de Material
-        $pino = AttributeValue::create(['attribute_id' => $material->id, 'value' => 'Pino']);
-        $roble = AttributeValue::create(['attribute_id' => $material->id, 'value' => 'Roble']);
+            // ========== PRODUCTOS Y VARIANTES ==========
+            $this->command->info('📦 Creando productos con variantes y ofertas...');
 
-        // Valores de Acabado
-        $natural = AttributeValue::create(['attribute_id' => $acabado->id, 'value' => 'Natural']);
-        $anodizado = AttributeValue::create(['attribute_id' => $acabado->id, 'value' => 'Anodizado']);
+            // 🔥 PRODUCTO 1: Vidrio Float 5mm
+            $vidrioFloat = Product::create([
+                'name' => 'Vidrio Float',
+                'slug' => 'vidrio-float',
+                'category_id' => $vidriosPlanos->id,
+                'description' => 'Vidrio plano transparente',
+            ]);
 
-        $this->command->info('✅ 4 atributos con 13 valores creados');
+            $variantFloat5mm = ProductVariant::create([
+                'product_id' => $vidrioFloat->id,
+                'sku' => 'VID-FLOAT-5MM-214X330',
+                'name' => 'Vidrio Float 5mm Transparente',
+                'sale_unit_id' => $m2->id,
+                'stock_quantity' => 10,
+                'min_stock' => 2,
+                'pricing_mode' => 'markup',
+                'markup_percentage' => 30.00, // 30% sobre costo base
+            ]);
+            $variantFloat5mm->attributeValues()->attach([$grosor5mm->id, $transparente->id]);
 
-        // ========== UNIDADES DE MEDIDA ==========
-        $this->command->info('📏 Obteniendo unidades de medida...');
+            // Oferta de proveedor (Donde viven los costos ahora)
+            SupplierProductOffer::create([
+                'supplier_id' => $supplier->id,
+                'product_variant_id' => $variantFloat5mm->id,
+                'cost' => 15000.00, // Costo por PLANCHA
+                'purchase_unit_id' => $plancha->id,
+                'purchase_width' => 2.14,
+                'purchase_height' => 3.30,
+                'is_preferred' => true,
+                'is_active' => true,
+                'notes' => 'Costo por plancha de 2.14x3.30m',
+            ]);
 
-        $m2 = UnitOfMeasure::where('abbreviation', 'm²')->first();
-        $ml = UnitOfMeasure::where('abbreviation', 'ml')->first();
-        $plancha = UnitOfMeasure::where('abbreviation', 'plancha')->first();
-        $paquete = UnitOfMeasure::where('abbreviation', 'paq')->first();
-        $barra = UnitOfMeasure::where('abbreviation', 'barra')->first();
-        $unidad = UnitOfMeasure::where('abbreviation', 'un')->first();
+            // 🔥 PRODUCTO 2: Varilla Madera Pino
+            $varillaMadera = Product::create([
+                'name' => 'Varilla Madera Pino',
+                'slug' => 'varilla-madera-pino',
+                'category_id' => $madera->id,
+                'description' => 'Varilla de pino para marcos',
+            ]);
 
-        // ========== PRODUCTOS Y VARIANTES ==========
-        $this->command->info('📦 Creando productos con variantes...');
+            $variantMadera = ProductVariant::create([
+                'product_id' => $varillaMadera->id,
+                'sku' => 'VAR-PINO-190',
+                'name' => 'Varilla Pino 1.9m',
+                'sale_unit_id' => $ml->id,
+                'stock_quantity' => 150, // Metros lineales
+                'min_stock' => 20,
+                'pricing_mode' => 'markup',
+                'markup_percentage' => 40.00,
+            ]);
+            $variantMadera->attributeValues()->attach([$pino->id, $natural->id]);
 
-        // 🔥 PRODUCTO 1: Vidrio Float
-        $vidrioFloat = Product::create([
-            'name' => 'Vidrio Float',
-            'slug' => 'vidrio-float',
-            'category_id' => $vidriosPlanos->id,
-            'description' => 'Vidrio plano transparente de alta calidad para carpintería y construcción',
-        ]);
+            SupplierProductOffer::create([
+                'supplier_id' => $supplier->id,
+                'product_variant_id' => $variantMadera->id,
+                'cost' => 45000.00, // Costo por PAQUETE
+                'purchase_unit_id' => $paquete->id, // Paquete de 30 unidades
+                'purchase_length' => 57.00, // 30 un * 1.9m = 57ml totales
+                'is_preferred' => true,
+                'is_active' => true,
+                'notes' => 'Paquete de 30 varillas de 1.9m (57ml totales)',
+            ]);
 
-        // Variante 1: Float 5mm Transparente (Plancha 2.14×3.30)
-        $variantFloat5mm = ProductVariant::create([
-            'product_id' => $vidrioFloat->id,
-            'sku' => 'VID-FLOAT-5MM-214X330',
-            'name' => 'Vidrio Float 5mm Transparente - Plancha 2.14×3.30',
-            'cost' => 15000.00, // Costo de compra por PLANCHA
-            'price' => 2500.00, // Precio de venta por M²
-            'purchase_unit_id' => $plancha->id,
-            'sale_unit_id' => $m2->id,
-            'purchase_width' => 2.14, // metros
-            'purchase_height' => 3.30, // metros
-            'conversion_factor' => bcmul('2.14', '3.30', 4), // 7.0620 m²
-            'stock_quantity' => 10,
-            'min_stock' => 2,
-        ]);
-        $variantFloat5mm->attributeValues()->attach([$grosor5mm->id, $transparente->id]);
+            // 🔥 PRODUCTO 3: Perfil Aluminio Modena
+            $aluminioModena = Product::create([
+                'name' => 'Perfil Aluminio Modena',
+                'slug' => 'perfil-aluminio-modena',
+                'category_id' => $aluminio->id,
+                'description' => 'Perfil para aberturas',
+            ]);
 
-        // Cálculo real: base_unit_cost = $15,000 / 7.0620m² = $2,124.2911 por m²
+            $variantAluminio = ProductVariant::create([
+                'product_id' => $aluminioModena->id,
+                'sku' => 'ALU-MODENA-600',
+                'name' => 'Perfil Modena Anodizado',
+                'sale_unit_id' => $ml->id,
+                'stock_quantity' => 48, // Metros lineales (8 barras)
+                'min_stock' => 6,
+                'pricing_mode' => 'fixed', // Precio fijo manual
+                'price' => 5200.00, // Precio venta por ML
+            ]);
+            $variantAluminio->attributeValues()->attach([$anodizado->id]);
 
-        // Variante 2: Float 6mm Transparente
-        $variantFloat6mm = ProductVariant::create([
-            'product_id' => $vidrioFloat->id,
-            'sku' => 'VID-FLOAT-6MM-214X330',
-            'name' => 'Vidrio Float 6mm Transparente - Plancha 2.14×3.30',
-            'cost' => 18500.00,
-            'price' => 3000.00,
-            'purchase_unit_id' => $plancha->id,
-            'sale_unit_id' => $m2->id,
-            'purchase_width' => 2.14,
-            'purchase_height' => 3.30,
-            'conversion_factor' => bcmul('2.14', '3.30', 4),
-            'stock_quantity' => 8,
-            'min_stock' => 2,
-        ]);
-        $variantFloat6mm->attributeValues()->attach([$grosor6mm->id, $transparente->id]);
+            SupplierProductOffer::create([
+                'supplier_id' => $supplier->id,
+                'product_variant_id' => $variantAluminio->id,
+                'cost' => 28000.00, // Costo por BARRA
+                'purchase_unit_id' => $barra->id,
+                'purchase_length' => 6.00, // Barra de 6m
+                'is_preferred' => true,
+                'is_active' => true,
+            ]);
 
-        $this->command->info('  ✓ Vidrio Float con 2 variantes');
+            // 🔥 PRODUCTO 4: Espejo 4mm
+            $espejo = Product::create([
+                'name' => 'Espejo 4mm',
+                'slug' => 'espejo-4mm',
+                'category_id' => $espejos->id,
+                'description' => 'Espejo de 4mm',
+            ]);
 
-        // 🔥 PRODUCTO 2: Varilla de Madera Pino
-        $varillaMadera = Product::create([
-            'name' => 'Varilla Madera Pino',
-            'slug' => 'varilla-madera-pino',
-            'category_id' => $madera->id,
-            'description' => 'Varilla de pino natural para marcos y molduras',
-        ]);
+            $variantEspejo = ProductVariant::create([
+                'product_id' => $espejo->id,
+                'sku' => 'ESP-4MM',
+                'name' => 'Espejo 4mm Plancha',
+                'sale_unit_id' => $m2->id,
+                'stock_quantity' => 36, // m² aprox (6 planchas)
+                'min_stock' => 6,
+                'pricing_mode' => 'markup',
+                'markup_percentage' => 35.00,
+            ]);
 
-        $variantMadera = ProductVariant::create([
-            'product_id' => $varillaMadera->id,
-            'sku' => 'VAR-PINO-190-PAQ30',
-            'name' => 'Varilla Pino 1.9m - Paquete ×30 unidades',
-            'cost' => 45000.00, // Costo de compra por PAQUETE (30 varillas de 1.9m)
-            'price' => 850.00,  // Precio de venta por METRO LINEAL
-            'purchase_unit_id' => $paquete->id,
-            'sale_unit_id' => $ml->id,
-            'purchase_length' => 1.90, // Cada varilla mide 1.9m
-            'conversion_factor' => bcmul('30', '1.90', 4), // 57.0000 metros lineales totales
-            'stock_quantity' => 5, // 5 paquetes en stock
-            'min_stock' => 1,
-        ]);
-        $variantMadera->attributeValues()->attach([$pino->id, $natural->id]);
+            SupplierProductOffer::create([
+                'supplier_id' => $supplier->id,
+                'product_variant_id' => $variantEspejo->id,
+                'cost' => 12000.00, // Costo por PLANCHA
+                'purchase_unit_id' => $plancha->id,
+                'purchase_width' => 2.00,
+                'purchase_height' => 3.00, // 6m²
+                'is_preferred' => true,
+                'is_active' => true,
+            ]);
 
-        // Cálculo real: base_unit_cost = $45,000 / 57ml = $789.4737 por metro lineal
+        }); // End Transaction
 
-        $this->command->info('  ✓ Varilla Madera Pino');
-
-        // 🔥 PRODUCTO 3: Perfil Aluminio Línea Modena
-        $aluminioModena = Product::create([
-            'name' => 'Perfil Aluminio Línea Modena',
-            'slug' => 'perfil-aluminio-modena',
-            'category_id' => $aluminio->id,
-            'description' => 'Perfil de aluminio línea Modena para aberturas',
-        ]);
-
-        $variantAluminio = ProductVariant::create([
-            'product_id' => $aluminioModena->id,
-            'sku' => 'ALU-MODENA-600',
-            'name' => 'Perfil Modena 6m Anodizado',
-            'cost' => 28000.00, // Costo de compra por BARRA de 6m
-            'price' => 5200.00, // Precio de venta por METRO LINEAL
-            'purchase_unit_id' => $barra->id,
-            'sale_unit_id' => $ml->id,
-            'purchase_length' => 6.00, // Barra de 6 metros
-            'conversion_factor' => '6.0000',
-            'stock_quantity' => 8,
-            'min_stock' => 2,
-        ]);
-        $variantAluminio->attributeValues()->attach([$anodizado->id]);
-
-        // Cálculo real: base_unit_cost = $28,000 / 6ml = $4,666.6667 por metro lineal
-
-        $this->command->info('  ✓ Perfil Aluminio Modena');
-
-        // 🔥 PRODUCTO 4: Espejo 4mm
-        $espejo = Product::create([
-            'name' => 'Espejo 4mm',
-            'slug' => 'espejo-4mm',
-            'category_id' => $espejos->id,
-            'description' => 'Espejo de 4mm para baños, recibidores y roperos',
-        ]);
-
-        $variantEspejo = ProductVariant::create([
-            'product_id' => $espejo->id,
-            'sku' => 'ESP-4MM-200X300',
-            'name' => 'Espejo 4mm - Plancha 2.00×3.00',
-            'cost' => 12000.00,
-            'price' => 2200.00,
-            'purchase_unit_id' => $plancha->id,
-            'sale_unit_id' => $m2->id,
-            'purchase_width' => 2.00,
-            'purchase_height' => 3.00,
-            'conversion_factor' => bcmul('2.00', '3.00', 4), // 6.0000 m²
-            'stock_quantity' => 6,
-            'min_stock' => 1,
-        ]);
-
-        $this->command->info('  ✓ Espejo 4mm');
-
-        // ========== RESUMEN ==========
-        $this->command->info('');
-        $this->command->info('════════════════════════════════════════');
-        $this->command->info('✅ CATÁLOGO CREADO EXITOSAMENTE');
-        $this->command->info('════════════════════════════════════════');
-        $this->command->info('📁 Categorías: 7 (con jerarquía)');
-        $this->command->info('🏷️  Atributos: 4 con 13 valores');
-        $this->command->info('📦 Productos: 4');
-        $this->command->info('🎯 Variantes: 5 (con dimensiones y conversiones)');
-        $this->command->info('');
-        $this->command->info('🔥 EJEMPLOS REALES CARGADOS:');
-        $this->command->info('   1. Vidrio Float 5mm: $15,000/plancha → $2,124.29/m²');
-        $this->command->info('   2. Varilla Pino: $45,000/paq → $789.47/ml');
-        $this->command->info('   3. Aluminio Modena: $28,000/barra → $4,666.67/ml');
-        $this->command->info('════════════════════════════════════════');
+        $this->command->info('✅ CATÁLOGO MIGRADO A NUEVA ESTRUCTURA (Suppliers + Offers)');
     }
 }

@@ -63,13 +63,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </a>
                 </li>
                 <li>
-                  <a href="/admin/catalog/suppliers" className="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-800 transition-colors text-sm">
+                  <a href="/admin/suppliers" className="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-800 transition-colors text-sm">
                     <span>🏭</span> Proveedores
                   </a>
                 </li>
                 <li>
-                  <a href="/admin/catalog/offers" className="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-800 transition-colors text-sm">
+                  <a href="/admin/offers" className="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-800 transition-colors text-sm">
                     <span>💲</span> Ofertas y Precios
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            <li className="pt-2">
+              <span className="text-xs uppercase text-slate-500 font-bold px-3">Gestión de Compras</span>
+              <ul className="mt-2 space-y-1">
+                <li>
+                  <a href="/admin/procurement/rfq" className="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-800 transition-colors text-sm">
+                    <span>📑</span> Solicitudes Cotización
+                  </a>
+                </li>
+                <li>
+                  <a href="/admin/purchase-orders" className="flex items-center gap-3 py-2 px-3 rounded hover:bg-slate-800 transition-colors text-sm">
+                    <span>🛒</span> Órdenes de Compra
                   </a>
                 </li>
               </ul>

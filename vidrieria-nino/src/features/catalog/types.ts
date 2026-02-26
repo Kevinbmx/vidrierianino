@@ -13,6 +13,27 @@ export interface Category {
     updated_at?: string;
 }
 
+/**
+ * Representa un lote físico de inventario.
+ * Contiene las dimensiones reales de las piezas compradas.
+ */
+export interface InventoryBatch {
+    id: number;
+    batch_code: string;
+    physical_quantity: number | string;       // Cantidad física (ej: 10 planchas)
+    dimensions: {
+        width?: number;
+        height?: number;
+        length?: number;
+        weight?: number;
+    } | null;
+    dimension_label: string;                  // Etiqueta legible ej: "3.60 × 2.50 m"
+    location?: string;
+    status: 'available' | 'reserved' | 'consumed' | 'quarantine';
+    purchase_order_id?: number;
+    created_at?: string;
+}
+
 export type UnitType = 'area' | 'length' | 'unit' | 'weight';
 
 export interface UnitOfMeasure {
@@ -41,13 +62,26 @@ export type PricingMode = 'fixed' | 'markup';
 export interface Supplier {
     id: number;
     name: string;
-    contact_name?: string;
-    email?: string;
-    phone?: string;
-    address?: string;
-    notes?: string;
+    rif?: string | null;
+    payment_terms?: string | null;
+    website?: string | null;
+    notes?: string | null;
     is_active: boolean;
     offers_count?: number;
+    product_offers?: any[];
+    primary_contact?: {
+        id: number;
+        name: string;
+        role?: string;
+        phone?: string;
+        email?: string;
+    };
+    main_branch?: {
+        id: number;
+        name: string;
+        address?: string;
+        city?: string;
+    };
     created_at?: string;
     updated_at?: string;
 }
@@ -58,11 +92,14 @@ export interface SupplierProductOffer {
     product_variant_id: number;
 
     // Datos de compra
+    supplier_sku?: string; // Código del proveedor
     cost: number | string;
     purchase_unit_id: number;
+    pack_quantity: number | string; // Factor de empaque (ej: 30)
     purchase_width?: number | string | null;
     purchase_height?: number | string | null;
     purchase_length?: number | string | null;
+    delivery_days?: number; // Tiempo de entrega
 
     // Cálculos automáticos
     base_unit_cost: number | string;
@@ -89,19 +126,41 @@ export interface ProductVariant {
 
     // Flexible Pricing
     pricing_mode: PricingMode;
-    price: number | string; // Usado solo si pricing_mode = 'fixed'
-    markup_percentage?: number | string | null; // Usado solo si pricing_mode = 'markup'
-    final_price: number | string; // Calculado dinámicamente
+    price: number | string;
+    markup_percentage?: number | string | null;
+    final_price: number | string;
 
     sale_unit_id: number;
     sale_unit?: UnitOfMeasure;
+    sale_unit_type?: 'area' | 'length' | 'weight' | 'unit'; // Tipo para cálculos
+    sale_unit_abbr?: string;                                 // Abreviación para la UI (m², ml, etc.)
 
+    // Dimensiones (legacy, retrocompatibilidad)
+    width?: number;
+    height?: number;
+    length?: number;
+    total_dimension?: number;
+
+    // Dimensiones múltiples
+    dimensions?: ProductVariantDimension[];
+
+    // Empaques
+    packagings?: ProductVariantPackaging[];
+
+    // 📦 Stock real calculado desde inventory_batches
+    total_abstract_stock: number | string;  // ej: 150.5 (m², ml, kg o pzas)
+    inventory_valuation: number | string;   // ej: 375000.00 ($)
+
+    // Stock legacy
     stock_quantity: number;
     min_stock: number;
-    is_low_stock: boolean;
+    is_low_stock: boolean;  // true si total_abstract_stock < min_stock
     has_stock: boolean;
 
     attributes?: AttributeValue[];
+
+    // Lotes de inventario físico
+    inventory_batches?: InventoryBatch[];
 
     // Ofertas de proveedores
     supplier_offers?: SupplierProductOffer[];
@@ -110,6 +169,24 @@ export interface ProductVariant {
     is_active: boolean;
     created_at?: string;
     updated_at?: string;
+}
+
+export interface ProductVariantPackaging {
+    id: number;
+    name: string; // "Caja"
+    quantity: number; // 30
+    description?: string;
+    is_default_purchase: boolean;
+}
+
+export interface ProductVariantDimension {
+    id: number;
+    name: string;
+    width?: number;
+    height?: number;
+    length?: number;
+    weight?: number;
+    is_default: boolean;
 }
 
 export interface Product {
@@ -149,4 +226,20 @@ export interface PaginatedResponse<T> {
 
 export interface SingleResponse<T> {
     data: T;
+}
+export interface PackagingType {
+    id: number;
+    name: string;
+    default_quantity: number;
+    description?: string;
+}
+
+export interface DimensionTemplate {
+    id: number;
+    name: string;
+    width?: number;
+    height?: number;
+    length?: number;
+    type: 'area' | 'length' | 'unit';
+    description?: string;
 }

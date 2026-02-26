@@ -24,6 +24,8 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
+            'category_id' => $this->category_id,
+            'is_active' => $this->is_active,
 
             // Relaciones
             'category' => new CategoryResource($this->whenLoaded('category')),
@@ -36,7 +38,6 @@ class ProductResource extends JsonResource
                 fn() => $this->cheapestVariant()?->price
             ),
 
-            'is_active' => $this->is_active,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

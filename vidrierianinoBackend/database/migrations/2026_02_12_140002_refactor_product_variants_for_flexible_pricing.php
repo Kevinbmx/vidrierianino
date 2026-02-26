@@ -35,6 +35,7 @@ return new class extends Migration {
             // El campo 'price' ya existe, pero cambiaremos su semántica:
             // - Si pricing_mode = 'fixed': Se usa directamente
             // - Si pricing_mode = 'markup': Se calcula dinámicamente (este campo puede quedar como cache o null)
+            $table->decimal('price', 12, 2)->nullable()->change();
         });
 
         // 2. Eliminar campos de compra (ahora viven en supplier_product_offers)

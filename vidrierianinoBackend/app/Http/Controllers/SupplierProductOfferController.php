@@ -61,6 +61,7 @@ class SupplierProductOfferController extends Controller
             'purchase_length' => 'nullable|numeric|min:0',
             'is_preferred' => 'boolean',
             'notes' => 'nullable|string',
+            'document_url' => 'nullable|string|url|max:500',
         ]);
 
         // Agregar el product_variant_id automáticamente
@@ -114,6 +115,7 @@ class SupplierProductOfferController extends Controller
             'is_preferred' => 'boolean',
             'is_active' => 'boolean',
             'notes' => 'nullable|string',
+            'document_url' => 'nullable|string|url|max:500',
         ]);
 
         $offer->update($validated);

@@ -13,6 +13,8 @@ export const catalogKeys = {
     variants: (productId: number) => [...catalogKeys.product(productId), 'variants'] as const,
     suppliers: () => [...catalogKeys.all, 'suppliers'] as const,
     supplier: (id: number) => [...catalogKeys.suppliers(), id] as const,
+    supplierContacts: (supplierId: number) => [...catalogKeys.supplier(supplierId), 'contacts'] as const,
+    supplierBranches: (supplierId: number) => [...catalogKeys.supplier(supplierId), 'branches'] as const,
     variantOffers: (variantId: number) => [...catalogKeys.all, 'variant-offers', variantId] as const,
     offer: (offerId: number) => [...catalogKeys.all, 'offer', offerId] as const,
 };
@@ -276,5 +278,144 @@ export function useBestOffer(variantId: number) {
         queryKey: [...catalogKeys.variantOffers(variantId), 'best'],
         queryFn: () => catalogApi.getBestOffer(variantId),
         enabled: !!variantId,
+    });
+}
+
+// --- Efficiency Templates ---
+
+export function usePackagingTypes() {
+    return useQuery({
+        queryKey: ['catalog', 'templates', 'packaging'],
+        queryFn: () => catalogApi.getPackagingTypes(),
+        staleTime: 1000 * 60 * 60, // 1 hour
+    });
+}
+
+export function useDimensionTemplates(type?: string) {
+    return useQuery({
+        queryKey: ['catalog', 'templates', 'dimensions', type],
+        queryFn: () => catalogApi.getDimensionTemplates(type),
+        staleTime: 1000 * 60 * 60, // 1 hour
+    });
+}
+
+// --- Supplier Contacts ---
+
+/** Obtiene todos los contactos de un proveedor. */
+export function useSupplierContacts(supplierId: number) {
+    return useQuery({
+        queryKey: catalogKeys.supplierContacts(supplierId),
+        queryFn: () => catalogApi.getSupplierContacts(supplierId),
+        enabled: !!supplierId,
+    });
+}
+
+/** Crea un nuevo contacto para un proveedor. */
+export function useCreateSupplierContact(supplierId: number) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: any) => catalogApi.createSupplierContact(supplierId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplierContacts(supplierId) });
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplier(supplierId) }); // refresca primary_contact
+        },
+    });
+}
+
+/** Actualiza un contacto existente de un proveedor. */
+export function useUpdateSupplierContact(supplierId: number) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ contactId, data }: { contactId: number; data: any }) =>
+            catalogApi.updateSupplierContact(supplierId, contactId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplierContacts(supplierId) });
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplier(supplierId) }); // refresca primary_contact
+        },
+    });
+}
+
+/** Elimina un contacto de un proveedor. */
+export function useDeleteSupplierContact(supplierId: number) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (contactId: number) => catalogApi.deleteSupplierContact(supplierId, contactId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplierContacts(supplierId) });
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplier(supplierId) });
+        },
+    });
+}
+
+/** Marca un contacto como principal (desenmarca los demás). */
+export function useSetContactPrimary(supplierId: number) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (contactId: number) => catalogApi.setSupplierContactPrimary(supplierId, contactId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplierContacts(supplierId) });
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplier(supplierId) }); // actualiza contacto principal en sidebar
+        },
+    });
+}
+
+// --- Supplier Branches ---
+
+/** Obtiene todas las sucursales de un proveedor (con sus contactos). */
+export function useSupplierBranches(supplierId: number) {
+    return useQuery({
+        queryKey: catalogKeys.supplierBranches(supplierId),
+        queryFn: () => catalogApi.getSupplierBranches(supplierId),
+        enabled: !!supplierId,
+    });
+}
+
+/** Crea una nueva sucursal para un proveedor. */
+export function useCreateSupplierBranch(supplierId: number) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: any) => catalogApi.createSupplierBranch(supplierId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplierBranches(supplierId) });
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplier(supplierId) });
+        },
+    });
+}
+
+/** Actualiza una sucursal existente. */
+export function useUpdateSupplierBranch(supplierId: number) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ branchId, data }: { branchId: number; data: any }) =>
+            catalogApi.updateSupplierBranch(supplierId, branchId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplierBranches(supplierId) });
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplier(supplierId) });
+        },
+    });
+}
+
+/** Elimina una sucursal. Los contactos quedan sin sucursal asignada. */
+export function useDeleteSupplierBranch(supplierId: number) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (branchId: number) => catalogApi.deleteSupplierBranch(supplierId, branchId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplierBranches(supplierId) });
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplierContacts(supplierId) });
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplier(supplierId) });
+        },
+    });
+}
+
+/** Marca una sucursal como sede principal. Desmarca las demás. */
+export function useSetBranchMain(supplierId: number) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (branchId: number) => catalogApi.setSupplierBranchMain(supplierId, branchId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplierBranches(supplierId) });
+            queryClient.invalidateQueries({ queryKey: catalogKeys.supplier(supplierId) });
+        },
     });
 }

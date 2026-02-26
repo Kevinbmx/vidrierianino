@@ -16,13 +16,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Supplier extends Model
 {
     protected $fillable = [
-        'name',
-        'contact_name',
-        'email',
-        'phone',
-        'address',
-        'notes',
-        'is_active'
+        'name',          // Nombre comercial de la empresa
+        'rif',           // Identificación fiscal (J-12345678)
+        'payment_terms', // Condiciones de pago ("30 días", "contado")
+        'website',       // Sitio web (opcional)
+        'notes',         // Notas internas
+        'is_active',
     ];
 
     protected $casts = [
@@ -32,8 +31,31 @@ class Supplier extends Model
     // ========== RELACIONES ==========
 
     /**
+     * Contactos de este proveedor (vendedoras, gerentes, etc.).
+     * Impacto en el negocio: Evita crear un proveedor por cada vendedora.
+     *
+     * @return HasMany
+     */
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(SupplierContact::class);
+    }
+
+    /**
+     * Sucursales de este proveedor (sedes, locales).
+     * Impacto en el negocio: Permite emitir RFQs a una sede específica
+     * del mismo proveedor con contactos y precios diferenciados.
+     *
+     * @return HasMany
+     */
+    public function branches(): HasMany
+    {
+        return $this->hasMany(SupplierBranch::class);
+    }
+
+    /**
      * Ofertas de productos de este proveedor.
-     * 
+     *
      * @return HasMany
      */
     public function productOffers(): HasMany
@@ -64,5 +86,22 @@ class Supplier extends Model
     public function isActive(): bool
     {
         return $this->is_active;
+    }
+    /**
+     * Relación con las invitaciones a cotizaciones (Tabla Pivote).
+     */
+    public function quotationRequestSuppliers(): HasMany
+    {
+        return $this->hasMany(QuotationRequestSupplier::class);
+    }
+
+    /**
+     * Relación directa con las cotizaciones enviadas a través de la tabla pivote.
+     */
+    public function quotationRequests(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(QuotationRequest::class, 'quotation_request_suppliers')
+            ->withPivot(['status', 'submission_channel', 'sent_at', 'replied_at', 'response_document_url'])
+            ->withTimestamps();
     }
 }

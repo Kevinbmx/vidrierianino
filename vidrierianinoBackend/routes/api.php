@@ -41,6 +41,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('suppliers/{supplier}/deactivate', [App\Http\Controllers\SupplierController::class, 'deactivate']);
     Route::post('suppliers/{supplier}/activate', [App\Http\Controllers\SupplierController::class, 'activate']);
 
+    // Contactos por proveedor (vendedoras, gerentes, etc.)
+    Route::get('suppliers/{supplier}/contacts', [App\Http\Controllers\SupplierContactController::class, 'index']);
+    Route::post('suppliers/{supplier}/contacts', [App\Http\Controllers\SupplierContactController::class, 'store']);
+    Route::put('suppliers/{supplier}/contacts/{contact}', [App\Http\Controllers\SupplierContactController::class, 'update']);
+    Route::delete('suppliers/{supplier}/contacts/{contact}', [App\Http\Controllers\SupplierContactController::class, 'destroy']);
+    Route::post('suppliers/{supplier}/contacts/{contact}/set-primary', [App\Http\Controllers\SupplierContactController::class, 'setPrimary']);
+
+    // Sucursales por proveedor
+    Route::get('suppliers/{supplier}/branches', [App\Http\Controllers\SupplierBranchController::class, 'index']);
+    Route::post('suppliers/{supplier}/branches', [App\Http\Controllers\SupplierBranchController::class, 'store']);
+    Route::put('suppliers/{supplier}/branches/{branch}', [App\Http\Controllers\SupplierBranchController::class, 'update']);
+    Route::delete('suppliers/{supplier}/branches/{branch}', [App\Http\Controllers\SupplierBranchController::class, 'destroy']);
+    Route::post('suppliers/{supplier}/branches/{branch}/set-main', [App\Http\Controllers\SupplierBranchController::class, 'setMain']);
+
     // Supplier Product Offers (Ofertas de proveedores por variante)
     Route::get('product-variants/{variant}/offers', [App\Http\Controllers\SupplierProductOfferController::class, 'index']);
     Route::post('product-variants/{variant}/offers', [App\Http\Controllers\SupplierProductOfferController::class, 'store']);
@@ -69,6 +83,32 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{lead}/photos', [LeadController::class, 'uploadPhoto']);
         Route::get('/{lead}/whatsapp', [LeadController::class, 'getWhatsAppLink']);
     });
+    // ========== MÓDULO 2: COMPRAS Y RFQ ==========
+
+    // Solicitudes de Cotización (RFQ)
+    Route::apiResource('quotation-requests', App\Http\Controllers\QuotationRequestController::class);
+    Route::get('quotation-requests/{id}/analyze', [App\Http\Controllers\QuotationRequestController::class, 'analyze']);
+    Route::post('quotation-requests/{id}/generate-po', [App\Http\Controllers\QuotationRequestController::class, 'generatePurchaseOrder']);
+
+    // Distribución de RFQ (Padre → Hijos)
+    Route::get('quotation-requests/{id}/smart-matrix', [App\Http\Controllers\QuotationRequestController::class, 'getSmartMatrix']);
+    Route::post('quotation-requests/{id}/distribute', [App\Http\Controllers\QuotationRequestController::class, 'distribute']);
+    Route::post('quotation-requests/{id}/add-supplier', [App\Http\Controllers\QuotationRequestController::class, 'addSupplier']);
+
+    // Gestión de Respuestas (Precios)
+    Route::put('quotation-responses/{id}', [App\Http\Controllers\QuotationResponseController::class, 'update']);
+
+
+    // Órdenes de Compra (PO)
+    Route::apiResource('purchase-orders', App\Http\Controllers\PurchaseOrderController::class)->only(['index', 'show']);
+    Route::post('purchase-orders/{id}/confirm', [App\Http\Controllers\PurchaseOrderController::class, 'confirm']);
+    Route::post('purchase-orders/{id}/receive', [App\Http\Controllers\PurchaseOrderController::class, 'receive']);
+    Route::post('purchase-orders/{id}/cancel', [App\Http\Controllers\PurchaseOrderController::class, 'cancel']);
+
+    // Templates (Efficiency)
+    Route::get('/packaging-types', [App\Http\Controllers\Api\TemplateController::class, 'getPackagingTypes']);
+    Route::get('/dimension-templates', [App\Http\Controllers\Api\TemplateController::class, 'getDimensionTemplates']);
+
 });
 
 // Public Lead Capture (STEP 1)

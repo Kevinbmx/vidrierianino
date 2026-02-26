@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 /**
@@ -28,10 +29,14 @@ class ProductVariant extends Model
         'product_id',
         'sku',
         'name',
-        'price',              // Precio fijo (usado solo si pricing_mode = 'fixed')
+        'price',
         'sale_unit_id',
-        'pricing_mode',       // 'fixed' | 'markup'
-        'markup_percentage',  // Porcentaje de ganancia (ej: 35.00 = 35%)
+        'width',
+        'height',
+        'length', // Dimensiones físicas
+        'total_dimension', // Cache (m2/ml)
+        'pricing_mode',
+        'markup_percentage',
         'stock_quantity',
         'min_stock',
         'is_active'
@@ -39,6 +44,10 @@ class ProductVariant extends Model
 
     protected $casts = [
         'price' => 'decimal:4',
+        'width' => 'decimal:4',
+        'height' => 'decimal:4',
+        'length' => 'decimal:4',
+        'total_dimension' => 'decimal:4',
         'markup_percentage' => 'decimal:2',
         'stock_quantity' => 'integer',
         'min_stock' => 'integer',
@@ -55,6 +64,33 @@ class ProductVariant extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Dimensiones permitidas/configuradas para esta variante (One-to-Many).
+     */
+    public function dimensions()
+    {
+        return $this->hasMany(ProductVariantDimension::class);
+    }
+
+    /**
+     * Lotes de inventario físico asociados a esta variante.
+     * Fuente de verdad para el stock real del sistema.
+     *
+     * @return HasMany
+     */
+    public function inventoryBatches(): HasMany
+    {
+        return $this->hasMany(InventoryBatch::class);
+    }
+
+    /**
+     * Formas de empaque/compra disponibles (ej: Caja x 30).
+     */
+    public function packagings()
+    {
+        return $this->hasMany(ProductVariantPackaging::class);
     }
 
     /**
@@ -134,6 +170,113 @@ class ProductVariant extends Model
                 );
 
                 return bcmul((string) $bestOffer->base_unit_cost, $markupMultiplier, 4);
+            }
+        );
+    }
+
+    /**
+     * Calcula el stock total abstracto a partir de los inventory_batches activos.
+     *
+     * Lógica por tipo de unidad de venta:
+     * - Área (m²): SUM(physical_quantity * width * height)  → retorna metros cuadrados totales
+     * - Longitud (ml): SUM(physical_quantity * length)      → retorna metros lineales totales
+     * - Peso (kg): SUM(physical_quantity * weight)          → retorna kg totales
+     * - Unidad (pza): SUM(physical_quantity)               → retorna piezas totales
+     *
+     * Los valores nulos en JSON de dimensiones (accesorios simples) se tratan como 0
+     * para evitar errores en productos sin dimensiones configuradas.
+     *
+     * Usa bcmath para precisión decimal exacta en cálculos de vidriería.
+     *
+     * @return Attribute Retorna el total en la unidad abstracta correspondiente.
+     */
+    protected function totalAbstractStock(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                // Cargar batches activos (available y con qty > 0)
+                $activeBatches = $this->inventoryBatches
+                    ->filter(fn($b) => $b->status === 'available' && (float) $b->physical_quantity > 0);
+
+                // Obtener el tipo de unidad de venta (area, length, weight, unit)
+                $unitType = $this->saleUnit?->type ?? 'unit';
+
+                $total = '0.0000';
+
+                foreach ($activeBatches as $batch) {
+                    $qty = (string) ($batch->physical_quantity ?? 0);
+                    $dims = is_array($batch->dimensions) ? $batch->dimensions : [];
+
+                    if ($unitType === 'area') {
+                        // m² = physical_quantity * width * height
+                        $width  = (string) ($dims['width']  ?? 0);
+                        $height = (string) ($dims['height'] ?? 0);
+                        $area   = bcmul($width, $height, 4);
+                        $total  = bcadd($total, bcmul($qty, $area, 4), 4);
+
+                    } elseif ($unitType === 'length') {
+                        // ml = physical_quantity * length
+                        $length = (string) ($dims['length'] ?? 0);
+                        $total  = bcadd($total, bcmul($qty, $length, 4), 4);
+
+                    } elseif ($unitType === 'weight') {
+                        // kg = physical_quantity * weight
+                        $weight = (string) ($dims['weight'] ?? 0);
+                        $total  = bcadd($total, bcmul($qty, $weight, 4), 4);
+
+                    } else {
+                        // Unidades simples: solo sumar physical_quantity
+                        $total = bcadd($total, $qty, 4);
+                    }
+                }
+
+                return $total;
+            }
+        );
+    }
+
+    /**
+     * Calcula la valorización total del inventario de esta variante.
+     *
+     * Fórmula: total_abstract_stock * mejor_costo_proveedor
+     *
+     * Si no hay ofertas de proveedor disponibles, usa el precio de venta como fallback
+     * para dar una estimación conservadora del valor en stock.
+     *
+     * Impacto en el negocio: Permite calcular el valor monetario total del inventario
+     * y detectar el costo de capital inmovilizado.
+     *
+     * @return Attribute Retorna el total valorizado en la moneda local.
+     */
+    protected function inventoryValuation(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $stock = $this->total_abstract_stock ?? '0.0000';
+
+                // Usar el mejor costo de proveedor si está disponible
+                $bestOffer = $this->inventoryBatches
+                    ->whereIn('status', ['available'])
+                    ->first();
+
+                // Obtener costo base: intentar desde el mejor offer, fallback al precio de venta
+                $cost = '0.0000';
+                if ($this->relationLoaded('supplierOffers')) {
+                    $cheapestOffer = $this->supplierOffers
+                        ->where('is_active', true)
+                        ->sortBy(fn($o) => (float) $o->base_unit_cost)
+                        ->first();
+                    if ($cheapestOffer) {
+                        $cost = (string) $cheapestOffer->base_unit_cost;
+                    }
+                }
+
+                // Fallback al precio de venta si no hay costo de proveedor
+                if ($cost === '0.0000' && $this->price) {
+                    $cost = (string) $this->price;
+                }
+
+                return bcmul((string) $stock, $cost, 4);
             }
         );
     }

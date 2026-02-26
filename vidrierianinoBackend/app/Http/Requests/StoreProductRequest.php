@@ -53,6 +53,27 @@ class StoreProductRequest extends FormRequest
             // Attributes
             'variants.*.attribute_values' => 'nullable|array',
             'variants.*.attribute_values.*' => 'exists:attribute_values,id',
+
+            // New: Dimensions
+            'variants.*.width' => 'nullable|numeric|min:0',
+            'variants.*.height' => 'nullable|numeric|min:0',
+            'variants.*.length' => 'nullable|numeric|min:0',
+
+            // New: Packagings
+            'variants.*.packagings' => 'nullable|array',
+            'variants.*.packagings.*.name' => 'required|string|max:50',
+            'variants.*.packagings.*.quantity' => 'required|numeric|min:0.0001',
+            'variants.*.packagings.*.description' => 'nullable|string|max:255',
+            'variants.*.packagings.*.is_default_purchase' => 'nullable|boolean',
+
+            // New: Dimensions (Multi-Format)
+            'variants.*.dimensions' => 'nullable|array',
+            'variants.*.dimensions.*.name' => 'nullable|string|max:50',
+            'variants.*.dimensions.*.width' => 'nullable|numeric|min:0',
+            'variants.*.dimensions.*.height' => 'nullable|numeric|min:0',
+            'variants.*.dimensions.*.length' => 'nullable|numeric|min:0',
+            'variants.*.dimensions.*.weight' => 'nullable|numeric|min:0',
+            'variants.*.dimensions.*.is_default' => 'nullable|boolean',
         ];
     }
 
